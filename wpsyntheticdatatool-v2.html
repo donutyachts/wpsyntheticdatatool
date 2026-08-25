@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WP Synthetic Data Tool — HostPapa MWP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    /* HostPapa brand — see brandguide.md */
+    --navy: #182C3A;
+    --navy-royal: #18214D;
+    --lime: #A5BE00;
+    --lime-hover: #8FA500;
+    --teal: #1FB3AF;
+
+    --bg: #F4F6F8;
+    --surface: #ffffff;
+    --surface-2: #E8ECF0;
+    --border: #D0D8E2;
+    --border-strong: #8896A6;
+    --text: #2A3545;
+    --text-secondary: #4A5868;
+    --text-muted: #8896A6;
+    --accent: #1FB3AF;
+    --accent-bg: #E8F9F8;
+    --accent-border: #A9E4E1;
+    --accent-text: #12706D;
+    --success: #16a34a;
+    --success-bg: #f0fdf4;
+    --success-border: #bbf7d0;
+    --success-text: #15803d;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #b91c1c;
+    --warning-bg: #fffbeb;
+    --warning-border: #fde68a;
+    --warning-text: #92400e;
+    --radius: 8px;
+    --font: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 680px; margin: 0 auto; }
+  .header { background: var(--navy); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 2rem; }
+  .header h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.72); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+  .field input, .field textarea, .field select {
+    width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface-2); color: var(--text); font-family: var(--font);
+    font-size: 14px; padding: 8px 12px; transition: border-color 0.15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+  .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .field.checkbox-field label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .field.checkbox-field input[type="checkbox"] { width: auto; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .counts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-top: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--surface); color: var(--text); font-family: var(--font);
+    font-size: 14px; font-weight: 500; padding: 9px 18px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn.primary { background: var(--lime); color: var(--navy); font-weight: 600; border-color: transparent; }
+  .btn.primary:hover { background: var(--lime-hover); }
+  .btn.primary:disabled { background: var(--lime); opacity: 0.4; }
+  .btn.success { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+  .btn.danger { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
+  .btn.small { padding: 6px 10px; font-size: 12px; }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preset-btn.active { background: var(--teal); color: var(--navy); font-weight: 600; border-color: transparent; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .badge.idle { background: var(--surface-2); color: var(--text-muted); }
+  .badge.checking { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent-border); }
+  .badge.ok { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+  .badge.error { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 12px; }
+  .meta-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+  .meta-item .lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+  .meta-item .val { font-size: 14px; font-weight: 600; }
+  .confirm-box { background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .confirm-box h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--accent-text); margin-bottom: 8px; }
+  .confirm-box p { font-size: 13px; color: var(--accent-text); line-height: 1.6; }
+  .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin: 12px 0; }
+  .plan-item { background: var(--surface); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 10px; text-align: center; }
+  .plan-item .num { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--accent-text); }
+  .plan-item .lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; word-break: break-word; }
+  .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 1rem; flex-wrap: wrap; }
+  .progress-list { display: flex; flex-direction: column; gap: 8px; }
+  .step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface-2);
+    font-size: 14px; transition: all 0.2s;
+  }
+  .step.running { border-color: var(--accent-border); background: var(--accent-bg); color: var(--accent-text); }
+  .step.done { border-color: var(--success-border); background: var(--success-bg); color: var(--success-text); }
+  .step.error { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger-text); }
+  .step.pending { color: var(--text-muted); }
+  .step-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+  .step-label { flex: 1; font-weight: 500; }
+  .step-meta { font-size: 12px; opacity: 0.8; }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid var(--accent-border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .completion { background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
+  .completion h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--success-text); margin-bottom: 12px; }
+  .totals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+  .total-item { background: var(--surface); border: 1px solid var(--success-border); border-radius: var(--radius); padding: 10px; text-align: center; }
+  .total-item .num { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--success-text); }
+  .total-item .lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; word-break: break-word; }
+  .site-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--success-border);
+    border-radius: var(--radius); padding: 10px 16px;
+    color: var(--accent-text); font-weight: 500; font-size: 14px; text-decoration: none;
+  }
+  .site-link:hover { background: var(--accent-bg); }
+  .warn { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--warning-text); margin-top: 8px; }
+  .section-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  .phase { display: none; }
+  .phase.active { display: block; }
+  #connection-info { display: none; }
+
+  .theme-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .theme-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface-2); padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .theme-card:hover { border-color: var(--accent-border); }
+  .theme-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .theme-card .theme-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .theme-card.selected .theme-name { color: var(--accent-text); }
+  .theme-card .theme-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+  .cpt-row { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .cpt-row input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); font-family: var(--font); font-size: 14px; padding: 8px 10px; }
+  .cpt-empty { font-size: 13px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>WP Synthetic Data Tool</h1>
+    <p>HostPapa Managed WordPress — test site population</p>
+  </div>
+
+  <!-- PHASE 1: Setup -->
+  <div class="phase active" id="phase-setup">
+    <div class="card">
+      <div class="card-title">Connection details</div>
+      <div class="field">
+        <label>Site URL</label>
+        <input type="url" id="site-url" value="" placeholder="https://yoursite.com">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>WordPress username</label>
+          <input type="text" id="wp-user" value="" placeholder="admin">
+        </div>
+        <div class="field">
+          <label>Application password</label>
+          <input type="password" id="wp-pass" value="" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx" autocomplete="new-password">
+          <div class="hint">Users → Profile → Application Passwords in WP Admin. Nothing here is saved anywhere — it only lives in this browser tab while it's open.</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+        <button class="btn" onclick="checkConnection()">Check connection</button>
+        <span class="badge idle" id="conn-badge">not checked</span>
+      </div>
+      <div id="connection-info">
+        <div class="meta-grid" id="conn-meta"></div>
+      </div>
+      <div id="conn-error" style="display:none;" class="warn"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Content theme</div>
+      <div class="theme-grid" id="theme-grid"></div>
+      <div class="field" style="margin-top:14px;">
+        <label>Site label</label>
+        <textarea id="site-prompt"></textarea>
+        <div class="hint">For your own reference only — it shows up in the confirmation step but doesn't change what gets generated. Content comes from the theme selected above.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Content volume</div>
+      <div class="preset-row">
+        <button type="button" class="btn preset-btn" data-size="small" onclick="applyPreset('small')">Small</button>
+        <button type="button" class="btn preset-btn" data-size="medium" onclick="applyPreset('medium')">Medium</button>
+        <button type="button" class="btn preset-btn" data-size="large" onclick="applyPreset('large')">Large</button>
+      </div>
+      <div class="counts-grid">
+        <div class="field"><label>Posts</label><input type="number" id="count-posts" min="0" value="10"></div>
+        <div class="field"><label>Pages</label><input type="number" id="count-pages" min="0" value="5"></div>
+        <div class="field"><label>Users</label><input type="number" id="count-users" min="0" value="5"></div>
+        <div class="field"><label>Comments</label><input type="number" id="count-comments" min="0" value="25"></div>
+        <div class="field"><label>Products</label><input type="number" id="count-products" min="0" value="10"></div>
+      </div>
+      <div class="hint">Presets fill these in — adjust any number directly if you need something in between. Content is created sequentially over the REST API, so large volumes (500+) can take several minutes and may run into host rate limits.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Media &amp; extra content types</div>
+      <div class="field checkbox-field">
+        <label><input type="checkbox" id="opt-images"> Generate &amp; attach placeholder images to posts, pages, and products</label>
+        <div class="hint">Pulls placeholder photos from picsum.photos and uploads each one to the WordPress media library, then attaches it as the featured image (or product image). Adds one extra request per item, so it meaningfully slows the run down.</div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="field" style="margin-bottom:8px;">
+        <label>Custom post types</label>
+        <div class="hint" style="margin-top:0; margin-bottom:10px;">Optional. Seeds additional post types with generic title + body content — useful for testing CPT admin screens and templates. Assumes the post type is registered with <code>show_in_rest</code> and is reachable at the standard <code>wp/v2/&lt;rest_base&gt;</code> route with title/content support.</div>
+      </div>
+      <div id="cpt-list"></div>
+      <div class="cpt-empty" id="cpt-empty">No custom post types added.</div>
+      <button type="button" class="btn small" onclick="addCptRow()" style="margin-top:8px;">+ Add custom post type</button>
+    </div>
+
+    <button class="btn primary" id="btn-proceed" onclick="proceedToConfirm()" disabled>
+      Review &amp; confirm →
+    </button>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">Connect successfully to enable</p>
+  </div>
+
+  <!-- PHASE 2: Confirm -->
+  <div class="phase" id="phase-confirm">
+    <div class="confirm-box">
+      <h3>Ready to populate</h3>
+      <p id="confirm-summary"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Content plan</div>
+      <div class="plan-grid" id="plan-grid"></div>
+      <div class="warn" id="woo-warn" style="display:none;">
+        ⚠️ WooCommerce products will only be created if WooCommerce is installed and active on this site. All other content will still be created regardless.
+      </div>
+      <div class="warn" id="images-note" style="display:none;">
+        🖼️ Placeholder images will be fetched from picsum.photos and uploaded to the media library, then attached to each item. This adds a request per item and will slow things down noticeably.
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" onclick="startPopulation()">✓ Approve &amp; populate site</button>
+      <button class="btn" onclick="goBack()">← Back</button>
+    </div>
+  </div>
+
+  <!-- PHASE 3: Running -->
+  <div class="phase" id="phase-running">
+    <div class="card">
+      <div class="card-title">Populating site…</div>
+      <div class="progress-list" id="progress-list"></div>
+    </div>
+  </div>
+
+  <!-- PHASE 4: Complete -->
+  <div class="phase" id="phase-complete">
+    <div class="progress-list" id="final-steps" style="margin-bottom:1rem;"></div>
+    <div class="completion">
+      <h3>✓ Population complete</h3>
+      <div class="totals-grid" id="totals-grid"></div>
+      <a class="site-link" id="site-visit-link" href="#" target="_blank">
+        ↗ View site
+      </a>
+    </div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn" onclick="resetTool()">← Populate another site</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- shared word banks ---------- */
+
+const FIRST_NAMES = ["Alex","Jordan","Taylor","Morgan","Casey","Riley","Jamie","Avery","Quinn","Reese","Drew","Skyler","Emerson","Rowan","Finley"];
+const LAST_NAMES = ["Bennett","Carter","Diaz","Ellison","Foster","Grant","Hayes","Iverson","Jensen","Kwan","Lawson","Mercer","Nguyen","Ortiz","Park"];
+
+const VARIATION_INTROS = [
+  "We're revisiting this topic after hearing from more of you — here's the updated take.",
+  "A few things have changed since we first covered this, so here's a fresh pass.",
+  "This one keeps coming up in questions, so we're bringing it back with more detail.",
+  "Bringing this back around with a couple of updates worth sharing.",
+  "Another look at this, prompted by a wave of recent questions.",
+  "We keep coming back to this topic because it keeps mattering.",
+  "An update on something we've talked about before, with new context.",
+  "Same topic, new angle — here's what's changed."
+];
+
+const NEUTRAL_PARAGRAPHS = [
+  "This entry was generated as synthetic test content to help populate the site with realistic volume for QA and performance testing.",
+  "Synthetic entries like this one are useful for exercising pagination, search indexing, caching, and admin list views under realistic data loads.",
+  "This content exists purely for testing purposes and does not reflect real information about the site or its subject matter.",
+  "Generated automatically as part of a bulk content seeding pass, this entry helps verify that custom post types render correctly end to end.",
+  "Placeholder body copy for load and layout testing — safe to edit, replace, or delete once testing wraps up.",
+  "Part of a batch of synthetic records created to simulate realistic content volume across this post type."
+];
+
+const GENERIC_PAGES = [
+  { title: "FAQ", content: "<h2>Frequently asked questions</h2><p><strong>Do you take walk-ins / same-day requests?</strong> We do when we can, though booking ahead is always the safer bet.</p><p><strong>How do I get in touch?</strong> See our Contact page for phone, email, and hours.</p><p><strong>Do you offer gift cards?</strong> Yes — available in a range of denominations, see our shop for details.</p>" },
+  { title: "Privacy Policy", content: "<p>We collect only the information needed to process your request, booking, or order — typically your name, email, and, where relevant, payment details handled securely by our payment processor. We do not sell personal information to third parties.</p><p>You can request a copy of the data we hold about you, or ask us to delete it, by contacting us directly. This page is placeholder content generated for testing purposes and should be replaced with an actual privacy policy before launch.</p>" },
+  { title: "Terms of Service", content: "<p>By using this site you agree to use it lawfully and in a way that doesn't interfere with other visitors. Content on this site is provided as-is, and prices, availability, and details are subject to change without notice.</p><p>This page is placeholder content generated for testing purposes and should be replaced with actual terms before this site goes live.</p>" },
+  { title: "Careers", content: "<p>We're a small, growing team and we're always interested in hearing from people who care about the work as much as we do. While we don't have specific openings listed right now, feel free to reach out with a note about what you're looking for.</p><p>This page is placeholder content generated for testing purposes.</p>" },
+  { title: "Support", content: "<p>Have a question we haven't answered elsewhere on the site? Reach out through our Contact page and we'll get back to you as soon as we can.</p><p>This page is placeholder content generated for testing purposes.</p>" }
+];
+
+const PRESETS = {
+  small:  { posts: 10,  pages: 5,  users: 5,   comments: 25,  products: 10  },
+  medium: { posts: 75,  pages: 15, users: 25,  comments: 200, products: 50  },
+  large:  { posts: 300, pages: 40, users: 100, comments: 800, products: 150 }
+};
+
+/* ---------- theme datasets ---------- */
+
+const THEME_LIBRARY = {
+
+  surf: {
+    id: "surf",
+    label: "California Surf Shop",
+    shortDesc: "Surf culture blog + surfboard, wetsuit &amp; accessories shop",
+    defaultPrompt: "A California surfing site heavy on design and beautiful photographs with a surf shop.",
+    categories: ["Surf Culture", "Wave Reports", "Gear & Reviews"],
+    tags: ["California", "Malibu", "Big Waves", "Beginners", "Longboard"],
+    bioTemplates: [
+      "Lifelong Malibu local. Dawn patrol every morning. Single fins only.",
+      "Longboard enthusiast and ocean photographer. Based in Santa Monica.",
+      "Chasing winter swells from Mavericks to Nazaré. Cold water specialist.",
+      "Surf instructor and ocean conservationist. Making waves since 2010.",
+      "Five years in. Still learning. Grateful for every session.",
+      "Shaper's apprentice by day, dawn patrol regular by 5am."
+    ],
+    postTemplates: [
+      { title: 'Dawn Patrol: Chasing Perfect Waves at Malibu', content: '<p>The alarm rings at 4:30am. Before the marine layer burns off, the most dedicated surfers are already waxing their boards at the Malibu pier. There is something spiritual about paddling out before the world wakes up — just you, the cold Pacific, and the first light spilling over the Santa Monica Mountains.</p><p>Dawn patrol is not just about avoiding crowds, though it helps. The early morning offshore winds groom the swell into something pristine. Glassy faces, clean lines, and the occasional dolphin pod riding the same wave you are. This is California surfing at its purest.</p><p>We spoke to local legend Kai Nakamura about his morning routine. He has not missed a dawn patrol session in three years. "The ocean tells you something different every morning," he says, pulling on his 4/3mm wetsuit. "You just have to show up to hear it."</p>' },
+      { title: 'The Art of Reading Ocean Swells', content: '<p>Understanding wave formation separates good surfers from great ones. A wave is not just water — it is energy that has traveled hundreds of miles across the open ocean, shaped by storms, underwater topography, and the angle of the seafloor as it approaches shore.</p><p>Groundswells, generated by powerful distant storms, produce the long-period waves that California surfers dream about. Wind swells, created locally, tend to be choppier and less consistent. Learning to distinguish between them — using buoy data, wind charts, and simple observation — is the foundation of session planning.</p><p>The key metrics to track are wave height, period (the time between waves), and direction. A 6-foot swell at 18 seconds of period will be dramatically more powerful and better-shaped than 6 feet at 8 seconds. Pair that with a favorable tide and an offshore wind, and you have the recipe for a session worth waking up early for.</p>' },
+      { title: "Mavericks: Northern California's Big Wave Mecca", content: "<p>Thirty miles south of San Francisco, a submerged rock formation called the Mavericks reef transforms winter groundswells into some of the most terrifying waves on the planet. On the right swell, faces reach forty feet and beyond — cold, powerful, and unforgiving.</p><p>The break was kept largely secret by local surfers until 1990, when Jeff Clark finally convinced a group of professionals to paddle out with him. What they witnessed changed big wave surfing forever. Within a decade, Mavericks had become the proving ground for the world's most fearless watermen.</p><p>Today, an invite-only contest draws the elite of big wave surfing to Half Moon Bay each winter. But the real Mavericks experience belongs to the dedicated few who monitor buoys obsessively, make the call on twelve hours notice, and paddle into mountains of cold water because they simply cannot imagine not doing so.</p>" },
+      { title: 'Longboarding Revival: Why Classic Style Never Dies', content: '<p>Cross-stepping to the nose, hanging five over the tip, dropping into a graceful trim line — longboarding is a meditation in motion. While shortboard performance surfing has chased ever-more-radical aerial maneuvers, longboarding has quietly reclaimed its place as the soul of the sport.</p><p>The revival began in the 1990s and has accelerated ever since. Today, some of the most stylish surfers in the world ride single-fin logs shaped in the tradition of the 1960s. The goal is not power or speed, but grace — making it look effortless while everything around you is in motion.</p><p>California has always been longboarding country. From the Malibu colony to the classic point breaks of Santa Cruz, the long, peeling waves of the California coast reward patient, flowing surfing over aggression. Pick up a 9-foot log and find out what the fuss is about.</p>' },
+      { title: 'Surfing the Channel Islands: A Weekend Guide', content: '<p>Forty miles off the Ventura coast, the Channel Islands deliver some of the best uncrowded surfing in California. No roads, no crowds, no cell service — just pristine waves breaking over kelp-fringed reefs and empty beaches.</p><p>The crossing takes ninety minutes by boat from Ventura Harbor. Island Packers runs regular trips to Santa Cruz Island, the largest of the chain, where a handful of quality breaks await those willing to make the journey. Bring enough supplies for two or three days — camping is permitted, and the stargazing alone is worth the trip.</p><p>The surf ranges from mellow beach breaks suitable for all levels to serious reef passes that demand experience and respect. Check the swell forecast carefully before you go. A well-timed trip in winter or early spring can produce conditions that rival anywhere in the world.</p>' },
+      { title: 'How California Surf Culture Shaped the World', content: '<p>It started on the beaches of Waikiki and found its true home on the California coast. By the 1960s, Malibu, Huntington Beach, and Santa Cruz had become the epicenters of a global cultural movement — surf culture — that would reshape fashion, music, language, and lifestyle for generations.</p><p>The Gidget films brought surfing to Middle America. The Beach Boys gave it a soundtrack. Bruce Brown\'s "The Endless Summer" turned it into philosophy. California did not invent surfing, but it packaged it, sold it, and spread it to every coastline on earth.</p><p>The legacy is complicated. Commercialization diluted authenticity. Crowds destroyed the solitude that made surfing magical. But the core of the culture — the early mornings, the community of the lineup, the surrender to something larger than yourself — remains intact wherever waves break.</p>' },
+      { title: 'Winter Swells: Why Cold Water Means Better Waves', content: '<p>November through March, powerful low-pressure systems spinning across the North Pacific generate the largest and most consistent swells of the year. While summer crowds thin and casual surfers pack away their boards, the serious locals know: this is when California truly delivers.</p><p>The water temperature drops into the low fifties along the central and northern coast. A good 4/3mm wetsuit, booties, and gloves become essential equipment. But the reward for tolerating the cold is access to waves of a size and quality that simply do not arrive in summer.</p><p>The great winter swells of recent memory — the El Niño winters of 2016 and 2023 — brought forty-year events to breaks that rarely see overhead surf. Mavericks ran. Jaws detonated. And down at the local beach break, a generation of surfers got the sessions of their lives.</p>' },
+      { title: "Beginner's Guide to Your First Surf Lesson", content: "<p>Every surfer you see threading barrels and carving turns started in the whitewater. The beginning is awkward, humbling, and absolutely worth it. Here is what to expect from your first lesson.</p><p>Your instructor will start on the beach, walking you through the pop-up motion: lying flat, hands beside your chest, pushing up and planting your feet in one fluid movement. Practice this on land until it feels automatic. In the water, everything happens fast.</p><p>The first waves you catch will be whitewater — broken waves that push you toward shore with forgiving force. Focus on your stance. Feet shoulder-width apart, knees bent, arms out for balance, eyes looking forward. Do not look down at the board. Ride it out to the sand and do it again. And again. The ocean is a patient teacher if you let it be.</p>" },
+      { title: 'The Secret Spots: Finding Uncrowded Breaks', content: '<p>Every experienced California surfer carries a mental map of places they will never post on Instagram. The secret spot is one of the last genuinely sacred things in surf culture — discovered through years of exploring dirt roads, reading topo maps, and putting in time at breaks everyone else overlooked.</p><p>Finding your own spots requires curiosity more than athleticism. Drive down roads that look like they go nowhere. Check satellite imagery for reef formations at low tide. Talk to old-timers at the surf shop — not about their spots, but about the character of the coast. Pay attention to wind direction, swell angle, and tide windows that most surfers ignore.</p><p>The etiquette is simple: what you find, you protect. Share it only with people you trust. The moment a break appears on a surf app or a popular Instagram account, it is gone. The crowds arrive within days and never fully leave.</p>' },
+      { title: 'Surfboard Shaping: The Craft Behind Every Ride', content: '<p>Inside a dusty Encinitas workshop, master shaper Rick Martinez runs his hands along a foam blank, eyes closed, reading the curve like braille. He has shaped over twelve thousand boards in thirty years. Each one is different. Each one is a conversation between the shaper, the surfer, and the wave.</p><p>Modern surfboard shaping has split into two worlds: machine-assisted production shaping, which uses computer-controlled routers to cut foam to precise dimensions, and traditional hand shaping, where the entire board is created by hand with planers, sanding blocks, and decades of accumulated intuition.</p><p>The best boards often combine both — a machine cut that gets the blank close to the final shape, then a shaper\'s hands to finish the rails, refine the concave, and add the subtle asymmetries that make a board come alive under a specific surfer\'s feet. Come visit our shop to see the process firsthand.</p>' }
+    ],
+    pageTemplates: [
+      { title: 'About Us', content: '<p>Born from a deep love of the Pacific Ocean and an obsession with the perfect wave, our shop has been at the heart of California surf culture since 2008. We are surfers first and retailers second — every product we carry, every lesson we offer, and every piece of advice we give comes from lived experience in the water.</p><p>We believe that surfing is more than a sport. It is a relationship with the ocean, a community of people who share something wordless and essential, and a practice that changes how you see the world. Our mission is to welcome everyone into that experience — from the curious beginner standing on the sand for the first time to the seasoned local who has been reading these breaks for decades.</p><p>Find us at 2241 Pacific Coast Highway, Malibu. We are open every day from 7am to 7pm. Come in, talk waves, and let us help you find what you are looking for.</p>' },
+      { title: 'Surf Lessons', content: '<p>Whether you are catching your first wave or working on your backhand cutback, our certified instructors offer coaching for every skill level. We keep groups small — a maximum of four students per instructor — because we believe good coaching is a conversation, not a performance.</p><h2>What we offer</h2><p><strong>Beginner group lessons</strong> run two hours and cover water safety, board handling, paddling technique, and your first waves in the whitewater. We provide all equipment — board, wetsuit, and leash. These sessions run daily at 8am and 11am from our Malibu location.</p><p><strong>Private coaching</strong> is available for surfers at any level who want focused, personalized instruction. One hour of private coaching will advance your surfing more than months of solo practice. Book at least 48 hours in advance.</p><p><strong>Weekend clinics</strong> cover specific topics — reading waves, duck diving, tube riding fundamentals, and longboard style. These run monthly. Check our schedule and book your spot early — they fill quickly.</p>' },
+      { title: 'Surf Report', content: '<p>Current conditions updated daily at 6am, 10am, and 2pm. We pull data from the CDIP network of offshore buoys and combine it with local observation from our team in the water every morning.</p><h2>How to read the report</h2><p><strong>Swell height</strong> is measured at the buoy, not the beach. Expect breaking waves to be roughly half the reported swell height at most breaks, though this varies significantly with underwater topography and tide.</p><p><strong>Period</strong> (seconds between waves) matters as much as height. A long-period swell of 16 seconds or more produces powerful, well-organized waves. Anything under 10 seconds tends toward chop.</p><p><strong>Wind direction</strong> is everything for surface conditions. Offshore winds — blowing from land to sea — groom the wave face and hold up the lip. Onshore winds create choppy, difficult conditions. Check the wind before you check anything else.</p>' },
+      { title: 'Gallery', content: '<p>California light is unlike anywhere else on earth. The way it falls on water in the early morning — golden and low, casting long shadows across wave faces — is something that has to be witnessed to be understood. This gallery is our attempt to capture it.</p><p>All photographs were shot at California breaks between Santa Cruz and San Diego over the past five years. Our photographers are surfers themselves, which means they know how to be in the right place at the right moment — in the channel, on the cliffs, or in the water with a housing.</p><p>Prints are available for purchase in our shop. Each image is available as a limited edition fine art print, signed and numbered by the photographer. We also accept commissions for custom photography sessions at select breaks.</p>' },
+      { title: 'Contact', content: '<h2>Find us</h2><p><strong>Address:</strong> 2241 Pacific Coast Highway, Malibu, CA 90265<br><strong>Phone:</strong> (310) 555-0189<br><strong>Email:</strong> hello@californiasurf-test.example.com<br><strong>Hours:</strong> Daily 7am – 7pm, year round</p><h2>Get here</h2><p>We are located on PCH between Las Virgenes Road and Malibu Canyon Road, directly across from the beach. Street parking is available along PCH. We recommend arriving before 9am in summer to find a spot. The 534 bus runs along PCH from Santa Monica and stops in front of the shop.</p><h2>Lesson bookings</h2><p>Email or call to book lessons and clinics. We require 24 hours notice for cancellations. Deposits are non-refundable but transferable to another date within 60 days.</p>' }
+    ],
+    commentTemplates: [
+      'Caught the best set wave of my life at this spot last Tuesday. The offshore winds were absolutely perfect.',
+      'This guide is exactly what I needed before my trip to Trestles next month. Bookmarked.',
+      'The winter swells this year have been absolutely unreal. Best season in at least five years.',
+      'Longboarding has completely changed how I approach small surf. I will never go back.',
+      'Anyone else hitting the lineup at 5am to avoid the summer crowds? Worth every minute.',
+      'Finally got my first green wave after three lessons. Cannot describe the feeling.',
+      'Mavericks is on my bucket list. This article got me even more fired up to make it happen.',
+      'The offshore winds made it glassy all morning. One of those sessions you talk about for years.',
+      'Rented a board from the shop last weekend — the staff were incredibly helpful and knowledgeable.',
+      'Best dawn patrol session report I have read all season. The photography is stunning.',
+      'The Channel Islands trip was genuinely life-changing. Highly recommend making the crossing.',
+      'Reading swells is honestly an art form. This breakdown is the clearest explanation I have found.',
+      'Nothing beats a Malibu sunrise session with zero crowd and clean offshore conditions.',
+      'Just booked a beginner lesson for next weekend. Nervous and excited in equal measure.',
+      'The gallery photos are breathtaking. Who is the photographer? Incredible work.',
+      'Wax, fins, leash — checklist done. See you in the lineup at dawn.',
+      'I have been surfing for fifteen years and still learned something new reading this. Great work.',
+      'Classic longboard style will never go out of fashion. There is something timeless about it.',
+      'The board shaping article was beautifully written. More of this please.',
+      'Already planning my Channel Islands trip after reading this. Spring swell, here I come.',
+      'The shop has the best selection of wetsuits anywhere on the coast. Fair prices too.',
+      'Seal Beach is so underrated for beginners. Friendly locals and forgiving waves.',
+      'Offshore wind plus a solid swell equals the best Tuesday morning of the year.',
+      'Surf culture runs so deep in California. Love that this site captures that spirit.',
+      'Every session is different. That is what keeps bringing me back after all these years.'
+    ],
+    productTemplates: [
+      { name: 'Pacific Classic Longboard 9\'2"', price: '849.00', description: 'Hand-shaped in Encinitas by a master craftsman with thirty years of experience. This single-fin longboard delivers the classic glide and effortless nose-riding that California longboarding was built on. Available in natural, tinted, and opaque finishes.', sku: 'LB-920-CL', weight: '12' },
+      { name: 'Dawn Patrol Shortboard 6\'4"', price: '620.00', description: 'High-performance thruster built for punchy California beachbreak. Lightweight EPS construction with epoxy glass delivers pop and responsiveness without sacrificing paddle power. Available in three colorways.', sku: 'SB-640-DP', weight: '6' },
+      { name: 'Channel Islands Mid 7\'2"', price: '710.00', description: 'The ideal crossover board for surfers transitioning from shortboard to longboard or vice versa. Versatile, forgiving, and fun in a wide range of conditions from waist-high to overhead.', sku: 'MB-720-CI', weight: '8' },
+      { name: 'California Gold Wetsuit 4/3mm', price: '295.00', description: 'Full-stretch neoprene construction built for year-round California water temperatures. Internally taped flatlock seams prevent flushing. Chest zip entry. Thermal lining through the torso. Available in sizes XS through XXL.', sku: 'WS-43-CG', weight: '3' },
+      { name: 'Spring Suit 2mm', price: '165.00', description: 'Short-arm, full-leg 2mm suit for late spring and early fall sessions. Lightweight and fast-drying. Flatlock seams throughout. Available in short-arm and long-arm configurations.', sku: 'WS-20-SS', weight: '2' },
+      { name: 'Surf Wax Bundle — 6 Pack', price: '18.00', description: 'One each of cold, cool, warm, and tropical formulas, plus two basecoats. Never run out of wax mid-session. Paraffin-free, biodegradable formula. Includes a wax comb.', sku: 'ACC-WAX-6PK', weight: '0.5' },
+      { name: 'Bamboo Traction Pad — 3 Piece', price: '42.00', description: 'Eco-friendly sugarcane EVA foam traction pad in a three-piece configuration. Aggressive diamond groove pattern for maximum grip. 10mm kick tail. Compatible with all standard shortboard and mid-length tails.', sku: 'ACC-PAD-3PC', weight: '0.3' },
+      { name: 'Competition Leash 9ft', price: '34.00', description: 'Double-swivel stainless steel hardware prevents tangling. 7mm urethane cord rated to 400lbs breaking strength. Comfortable neoprene cuff with key pocket. Suitable for boards up to 9\'6".', sku: 'ACC-LSH-9FT', weight: '0.4' },
+      { name: 'Mavericks Fine Art Print', price: '125.00', description: 'Limited edition 24x36 inch fine art print of a 40-foot Mavericks set, shot during a recent El Niño season. Printed on 300gsm archival cotton rag. Signed and numbered by the photographer. Edition of 50.', sku: 'ART-MAV-2436', weight: '0.8' },
+      { name: 'Shop Gift Card', price: '50.00', description: 'Give the gift of surf. Gift cards never expire and can be used for boards, gear, wetsuits, lessons, and accessories. Available in $25, $50, $100, and $200 denominations. Delivered as a physical card in a branded envelope.', sku: 'GC-050', weight: '0' }
+    ]
+  },
+
+  saas: {
+    id: "saas",
+    label: "B2B SaaS Product Blog",
+    shortDesc: "Analytics SaaS blog — product, engineering &amp; customer stories, plus a small plans/merch shop",
+    defaultPrompt: "A B2B analytics SaaS blog — product updates, engineering deep-dives, and customer stories, plus a small merch/add-ons shop.",
+    categories: ["Product Updates", "Engineering", "Customer Stories"],
+    tags: ["SaaS", "Data", "API", "Onboarding", "Integrations"],
+    bioTemplates: [
+      "Product manager obsessed with reducing time-to-insight.",
+      "Backend engineer, API nerd, occasional coffee snob.",
+      "Customer success lead helping teams get more from their data.",
+      "Full-stack developer and open source contributor.",
+      "Data analyst turned product marketer.",
+      "Founding engineer, still writing code every day."
+    ],
+    postTemplates: [
+      { title: "How We Cut Dashboard Load Times by 80%", content: "<p>Six months ago, loading a busy CloudPulse dashboard with more than a dozen widgets took anywhere from four to seven seconds. That's an eternity for a product built around real-time decision-making. Our engineering team set an aggressive target: get every dashboard under one second, no matter how much data it's pulling.</p><p>The fix wasn't one big rewrite — it was a series of smaller wins. We moved widget queries to a shared cache layer, cut the number of round trips per page load from nine to two, and started streaming partial results instead of waiting for every widget to finish. The result: median load time dropped from 4.2 seconds to 780 milliseconds, and the slowest dashboards in our fleet are now faster than the fastest ones were a year ago.</p>" },
+      { title: "Announcing Webhooks 2.0", content: "<p>Webhooks have been part of CloudPulse since our earliest beta, but the original implementation had rough edges — no retry logic, no delivery logs, and payloads that didn't always match what the API returned elsewhere. Webhooks 2.0 fixes all three.</p><p>Every event now retries with exponential backoff for up to 24 hours, delivery logs are visible directly in your dashboard, and payloads are versioned so future changes won't break your integration without warning. Existing webhook endpoints will keep working exactly as before — the new behavior is opt-in until we fully deprecate v1 next year.</p>" },
+      { title: "5 Signs Your Team Has Outgrown Spreadsheets", content: "<p>Spreadsheets are a great way to start tracking metrics. They're also a terrible way to keep tracking them once more than two people depend on the numbers. If any of this sounds familiar — a shared sheet with seventeen tabs, a formula nobody wants to touch, a weekly ritual of copy-pasting numbers from three different tools — you've probably outgrown the spreadsheet stage.</p><p>The clearest signal is usually trust. When people start double-checking the numbers before a meeting, or two team leads show up with different totals for the same metric, the problem usually isn't the data — it's that no single source of truth exists. That's the exact gap a connected analytics layer is built to close.</p>" },
+      { title: "Inside Our Engineering Culture", content: "<p>We're a fully remote team spread across nine time zones, which means most of what makes our engineering culture work has to happen asynchronously. Pull requests carry more context than a typical Slack thread would, and design docs are written assuming the reader wasn't in the room when the idea started.</p><p>We also protect focus time aggressively. Engineers get two meeting-free days a week by default, and any recurring meeting has to justify its existence every quarter or it gets cut. It's not a perfect system, but it's one that's let a fourteen-person engineering team ship faster than teams three times our size.</p>" },
+      { title: "Customer Spotlight: Scaling Support with Real-Time Metrics", content: "<p>When Nova Freight's support team doubled in size last year, their biggest problem wasn't headcount — it was visibility. Team leads couldn't tell which queues were backing up until customers were already complaining. Within six weeks of connecting CloudPulse to their support stack, that changed.</p><p>\"We went from finding out about a bad queue an hour late to catching it in real time,\" says their director of support operations. \"The dashboards aren't fancy, but they're the first thing every lead checks in the morning now.\" Nova Freight's average response time dropped 34% in the following quarter.</p>" },
+      { title: "The Hidden Cost of Manual Reporting", content: "<p>Ask most operations teams how long the monthly report takes and you'll get an answer somewhere between four and twelve hours. Multiply that across a year and you're looking at one to three full work-weeks spent assembling numbers that, in most cases, already exist somewhere in a connected tool.</p><p>The real cost isn't just the hours — it's the lag. A report that takes a week to assemble is describing a business that no longer exists by the time anyone reads it. Automating the pipeline doesn't just save time; it makes the numbers useful again.</p>" },
+      { title: "API Rate Limits, Explained", content: "<p>Every CloudPulse plan includes a rate limit, and every few months someone asks us why. The short answer: rate limits protect the reliability of the platform for everyone, including you, during traffic spikes that would otherwise slow down queries for every other customer sharing the same infrastructure.</p><p>Standard plans are capped at 600 requests per minute per API key, with burst headroom for short spikes. If you're regularly hitting the ceiling, that's usually a sign to batch requests or move to webhook-based updates instead of polling — both of which we're happy to help you set up.</p>" },
+      { title: "Building a Data-Driven Team from Scratch", content: "<p>Becoming data-driven isn't a tooling decision, even though it's tempting to treat it like one. The teams that make the shift successfully usually start with a habit, not a dashboard: every recommendation in a meeting gets a follow-up question — \"what does the data say?\" — until asking it becomes reflexive.</p><p>Only after that habit is in place does the tooling matter. A single shared dashboard that everyone trusts beats five sophisticated ones that only the analytics team understands. Start smaller than feels comfortable, and expand once people are actually using what you've built.</p>" }
+    ],
+    pageTemplates: [
+      { title: "About", content: "<p>CloudPulse started in 2019 when our three co-founders got tired of Slack channels full of pasted screenshots trying to answer a simple question: how is the business doing right now? We built the first version of CloudPulse for ourselves, then realized every growing team had the same problem.</p><p>Today we're a team of 40 spread across four continents, serving over 1,200 companies who use CloudPulse to bring their metrics into one place. We were bootstrapped through our first three years and have stayed intentionally small — we'd rather build the right thing slowly than the wrong thing fast.</p>" },
+      { title: "Product", content: "<p>CloudPulse connects to the tools your team already uses — your database, your support platform, your billing system, your product analytics — and turns them into dashboards anyone can build without writing a query.</p><p>Under the hood, every connection is read-only and encrypted in transit and at rest. We never write back to your source systems, and you can revoke access to any connection at any time from your account settings.</p>" },
+      { title: "Pricing", content: "<p>CloudPulse is priced per seat, with every plan including unlimited dashboards and unlimited data connections. There is no charge for viewer-only seats, so you can share dashboards across your whole company without worrying about the bill.</p><p>Starter plans begin at $29 per editor seat per month. Enterprise plans add SSO, audit logs, and a dedicated support channel — reach out to our team for a quote based on your team size.</p>" },
+      { title: "Security & Compliance", content: "<p>CloudPulse is SOC 2 Type II certified, and our full report is available under NDA on request. All data is encrypted in transit with TLS 1.2+ and at rest with AES-256. We run regular third-party penetration tests and maintain a public status page with 90-day uptime history.</p><p>We are GDPR compliant and support data processing agreements for customers in the EU and UK. Customers on Enterprise plans can request a dedicated data residency region.</p>" },
+      { title: "Contact", content: "<p><strong>Sales:</strong> sales@cloudpulse-test.example.com<br><strong>Support:</strong> support@cloudpulse-test.example.com<br><strong>Hours:</strong> Monday–Friday, 6am–6pm PT, with on-call coverage for Enterprise customers.</p><p>Prefer to talk it through first? Book a 20-minute walkthrough with our team and we'll show you CloudPulse connected to a sample of your own data.</p>" }
+    ],
+    commentTemplates: [
+      "This is exactly the workflow change our team needed — thanks for writing this up.",
+      "Curious how this compares to building the same thing in-house with a BI tool?",
+      "We hit almost this exact rate limit issue last quarter, this explains a lot.",
+      "Sharing this with our ops team on Monday. Long overdue conversation.",
+      "The async culture point really resonates — we're still figuring this out as a remote team.",
+      "Webhooks 2.0 has been solid for us so far, especially the retry logic.",
+      "Would love a follow-up post with the actual before/after query plans.",
+      "This matches our experience almost exactly, down to the seventeen-tab spreadsheet.",
+      "Appreciate the transparency on pricing — more vendors should do this.",
+      "The support team spotlight is a great case study, forwarding to our CS lead.",
+      "Been a customer for two years now and this is still the best support experience we've had.",
+      "Great breakdown of the difference between reporting and being data-driven.",
+      "Question — does the SOC 2 report cover subprocessors too?",
+      "This is the clearest explanation of rate limiting I've read from any SaaS vendor.",
+      "The point about trust in the numbers is underrated. That's our actual bottleneck.",
+      "Onboarding took us under a day, which was honestly surprising for a BI tool.",
+      "Following up from the webinar — is data residency available on Pro plans yet?",
+      "Our dashboards used to take a week to build. Now it's an afternoon.",
+      "Small team here, but the free viewer seats make this an easy yes internally.",
+      "Read this twice. Bookmarking for our next planning cycle."
+    ],
+    productTemplates: [
+      { name: "Starter Plan Seat — Annual", price: "290.00", description: "One editor seat on the CloudPulse Starter plan, billed annually. Includes unlimited dashboards, unlimited data connections, and standard email support.", sku: "SEAT-START-ANN", weight: "0" },
+      { name: "Pro Plan Seat — Annual", price: "590.00", description: "One editor seat on the CloudPulse Pro plan, billed annually. Adds scheduled reports, custom roles, and priority support with a 4-hour response SLA.", sku: "SEAT-PRO-ANN", weight: "0" },
+      { name: "Enterprise Onboarding Package", price: "2500.00", description: "A guided onboarding engagement for Enterprise customers, including a dedicated implementation specialist, data model review, and a custom dashboard build for your top three use cases.", sku: "ONBD-ENT-01", weight: "0" },
+      { name: "API Rate Limit Boost", price: "150.00", description: "Doubles your account's API rate limit for one billing cycle. Useful during migrations, backfills, or short-term integration testing.", sku: "ADDON-RATE-2X", weight: "0" },
+      { name: "Dedicated Support Retainer", price: "900.00", description: "A monthly retainer that adds a named support engineer to your account with guaranteed same-day response during business hours.", sku: "ADDON-SUPPORT-M", weight: "0" },
+      { name: "CloudPulse Branded T-Shirt", price: "24.00", description: "Soft cotton crewneck in slate gray with the CloudPulse wordmark on the chest. Unisex sizing, S through XXL.", sku: "MERCH-TEE-01", weight: "0.3" },
+      { name: "Sticker Pack", price: "8.00", description: "A set of six vinyl stickers featuring the CloudPulse logo and internal team mascots. Weatherproof, laptop-ready.", sku: "MERCH-STICK-01", weight: "0.05" },
+      { name: "Desk Mat", price: "35.00", description: "Extended desk mat with a subtle grid pattern, stitched edges, and a non-slip base. 900mm x 400mm.", sku: "MERCH-DESKMAT-01", weight: "0.5" }
+    ]
+  },
+
+  restaurant: {
+    id: "restaurant",
+    label: "Farm-to-Table Restaurant",
+    shortDesc: "Restaurant &amp; café blog — menu, kitchen &amp; events stories, plus a small pantry/market shop",
+    defaultPrompt: "A farm-to-table restaurant & café blog — menu features, behind-the-scenes kitchen stories, and events, plus a small pantry/market shop.",
+    categories: ["Menu Features", "Behind the Scenes", "Events"],
+    tags: ["Seasonal", "Local", "Wine", "Brunch", "Catering"],
+    bioTemplates: [
+      "Regular at the Sunday brunch table, always orders the same thing.",
+      "Local food writer, first-time visitor, instant fan.",
+      "Wine club member since year one.",
+      "Brings the whole family in every Friday night.",
+      "Books every office party through Amber & Oak.",
+      "Chef-curious home cook, always taking notes."
+    ],
+    postTemplates: [
+      { title: "Our Fall Menu Just Dropped", content: "<p>The fall menu goes live tonight, and it's built around what came out of the ground this week: delicata squash from the Ferris farm, the last of the heirloom tomatoes, and the first Honeycrisp apples of the season. Chef Elena has been testing the squash dish for three weeks and finally landed on a version she's happy to serve.</p><p>A few holdovers stayed from summer by popular demand — the burrata and the grilled bread are staying put — but nearly everything else is new. Reservations for opening week are already filling up, so book ahead if you want a table before the leaves change.</p>" },
+      { title: "Meet the Farmers Behind Our Produce", content: "<p>Almost everything on our menu comes from within sixty miles of the restaurant, and most of it we can trace back to a specific field. The Ferris family has been supplying our root vegetables since we opened, and their youngest son now handles most of our weekly deliveries himself.</p><p>We visit the farms twice a season, not for the photos but because seeing what's actually growing changes what we cook. A surprise glut of padrón peppers last August became a special that sold out four nights running. That kind of responsiveness is only possible because we know the people growing our food.</p>" },
+      { title: "How We Source Our Coffee", content: "<p>Our house coffee comes from a single estate in the highlands, roasted in small batches every ten days by a roaster twenty minutes from here. We switched suppliers eighteen months ago after realizing our old coffee was inconsistent from bag to bag — a problem we didn't notice until we started cupping it properly.</p><p>Every new batch gets tasted by at least two people on staff before it goes on the menu. It's a small ritual, but it's one of the reasons regulars notice when something's slightly off — and why we notice it first.</p>" },
+      { title: "Behind the Line: A Day in Our Kitchen", content: "<p>Prep starts at 9am, four hours before we open for lunch. By the time the first table sits down, the kitchen has already gone through two coffee pots, a dozen sheet trays of roasted vegetables, and at least one minor crisis involving a delivery that showed up short.</p><p>The dinner rush is a different animal entirely — six cooks moving through a kitchen built for four, tickets stacking up on the rail, and somehow it all comes together. Most nights end around midnight with the whole team eating whatever's left over family-style before heading home.</p>" },
+      { title: "Wine Pairing 101 with Our Sommelier", content: "<p>Our sommelier Marcus gets the same question almost every night: what pairs with the roast chicken? His real answer is longer than most people want at a busy table, so here's the short version — a lighter red with some acidity beats a big bold one almost every time with poultry.</p><p>The bigger lesson he tries to teach, when there's time, is that pairing is about matching intensity and cutting richness, not matching flavors literally. A wine doesn't need to taste like the dish — it needs to make the dish taste better. Ask your server for a taste before committing to a bottle; that's what we're here for.</p>" },
+      { title: "Private Events at Amber & Oak", content: "<p>The private dining room seats up to twenty-two and has hosted everything from engagement dinners to a very memorable retirement party that ran until 2am. We build a custom menu for every event based on the season and whatever the host is celebrating.</p><p>Full restaurant buyouts are available for larger groups on select nights. We recommend booking at least six weeks out for anything over twelve guests, though we've pulled off smaller events with as little as a week's notice when the timing works.</p>" },
+      { title: "Sunday Brunch, Reinvented", content: "<p>We relaunched brunch this spring after retiring the old menu, which honestly hadn't changed much in five years. The new version leans harder into what the kitchen actually wants to cook — savory, produce-forward plates instead of the usual pancake stack lineup.</p><p>The biggest surprise has been the reception to the savory oatmeal, which we almost cut before launch for being too weird for a Sunday crowd. It's now the second best-selling dish on the menu, behind only the burrata.</p>" },
+      { title: "Five Years of Amber & Oak: A Look Back", content: "<p>We opened five years ago this month with twelve tables, a kitchen staff of three, and a menu that changed almost weekly because we genuinely didn't know what we were doing yet. A lot has changed since — the tables doubled, the staff grew tenfold — but the instinct to keep adjusting the menu never went away.</p><p>What hasn't changed is the reason we opened in the first place: cooking food that tastes like where it came from, for a room full of people who'll notice the difference. Thanks to everyone who's pulled up a chair over the last five years.</p>" }
+    ],
+    pageTemplates: [
+      { title: "About Us", content: "<p>Amber & Oak opened its doors five years ago with a simple idea: build every dish around what's actually good this week, not what's printed on a laminated menu from three years ago. That idea shaped everything from our sourcing to our kitchen layout.</p><p>We're a team of eighteen, led by chef and co-owner Elena Marsh, who trained in kitchens across the region before deciding it was time to build one of her own. Our dining room seats fifty-four, plus a private room for events, and we're open six nights a week for dinner and Sundays for brunch.</p>" },
+      { title: "Menu", content: "<p>Our menu changes seasonally and sometimes weekly depending on what's coming out of the fields nearby. A handful of dishes stay year-round by popular demand, but most of the menu is built fresh for each season.</p><p>We accommodate most dietary needs with advance notice — please let your server know about any allergies or restrictions when you're seated, or mention it when booking for larger groups.</p>" },
+      { title: "Reservations", content: "<p>We hold reservations for parties of two to eight through our online booking system, available up to 60 days in advance. For larger groups or private events, please contact us directly.</p><p>We hold reserved tables for fifteen minutes past the booking time. Cancellations within 24 hours of your reservation may be subject to a fee for parties of six or more.</p>" },
+      { title: "Private Events & Catering", content: "<p>Our private dining room accommodates up to twenty-two guests for seated events, with custom menus built around the season and the occasion. We also offer full restaurant buyouts for larger celebrations on select nights.</p><p>Off-site catering is available for corporate and private events within a 30-mile radius. Reach out at least three weeks in advance for the best availability.</p>" },
+      { title: "Contact", content: "<p><strong>Address:</strong> 118 Elm Street, Riverbend<br><strong>Phone:</strong> (555) 214-0192<br><strong>Email:</strong> hello@amberandoak-test.example.com<br><strong>Hours:</strong> Tuesday–Sunday, 5pm–10pm; Sunday brunch 10am–2pm</p><p>Street parking is available along Elm Street, with a public lot two blocks north on 3rd Avenue after 5pm.</p>" }
+    ],
+    commentTemplates: [
+      "Had the fall tasting menu last night — incredible, worth every penny.",
+      "The sourdough alone is worth the trip.",
+      "Booked our engagement dinner here, could not have gone better.",
+      "Savory oatmeal at brunch is criminally underrated, don't skip it.",
+      "Marcus talked us through a bottle we never would have picked ourselves. Perfect call.",
+      "Five years in and still our favorite spot in town, congrats on the anniversary.",
+      "The private room hosted our office holiday party and it was flawless.",
+      "Didn't expect to love a vegetable dish this much. The squash was incredible.",
+      "Service was warm without being slow, which is rarer than it should be.",
+      "The coffee upgrade was noticeable immediately. Great change.",
+      "Went in skeptical about brunch, left already planning the next visit.",
+      "Every dish tasted like it was cooked by someone who actually cared.",
+      "Farm-to-table done right instead of just printed on the menu.",
+      "The burrata is still the best in the city, five years running.",
+      "Reservations filled up fast for the new fall menu, glad we booked early.",
+      "Took my parents here for their anniversary, they haven't stopped talking about it.",
+      "The bread course alone justifies coming back monthly.",
+      "Kitchen clearly respects the produce. You can taste the difference.",
+      "Best wine pairing experience we've had outside a tasting room.",
+      "Retirement party ran way past closing and the staff never once rushed us out."
+    ],
+    productTemplates: [
+      { name: "House-Made Sourdough Loaf", price: "9.00", description: "Our signature sourdough, baked fresh daily using a starter that's been alive since we opened. Available whole or half, first come first served.", sku: "BAKE-SOUR-01", weight: "0.9" },
+      { name: "Amber & Oak Coffee Beans — 12oz Bag", price: "17.00", description: "The same single-estate coffee we serve in the dining room, roasted locally in small batches. Whole bean or ground, your choice.", sku: "PANTRY-COFFEE-12", weight: "0.4" },
+      { name: "Seasonal Jam Trio", price: "24.00", description: "Three small-batch jams made from whatever's in season — expect stone fruit in summer, apple and pear in fall. Flavors rotate quarterly.", sku: "PANTRY-JAM-TRIO", weight: "0.6" },
+      { name: "Chef's Spice Blend", price: "12.00", description: "Elena's house blend, used on everything from roast chicken to roasted vegetables. One jar lasts about two months of regular cooking.", sku: "PANTRY-SPICE-01", weight: "0.2" },
+      { name: "Estate Olive Oil", price: "28.00", description: "Cold-pressed olive oil from a family estate we've worked with since year one. The same bottle you'll see on every table in the dining room.", sku: "PANTRY-OIL-500", weight: "0.5" },
+      { name: "Amber & Oak Gift Card", price: "50.00", description: "Redeemable for dinner, brunch, or private events. Never expires. Available in $25, $50, $100, and $200 denominations.", sku: "GC-AO-050", weight: "0" },
+      { name: "Cookbook: Recipes from Amber & Oak", price: "38.00", description: "Forty recipes from our first five years, including the roast chicken, the savory oatmeal, and the squash dish that started it all. Hardcover, 220 pages.", sku: "BOOK-AO-01", weight: "0.7" },
+      { name: "Local Wildflower Honey", price: "14.00", description: "Raw honey from hives twelve miles from the restaurant, harvested twice a year. Unfiltered, never heated.", sku: "PANTRY-HONEY-01", weight: "0.4" }
+    ]
+  }
+};
+
+/* ---------- state ---------- */
+
+let connectionOk = false;
+let siteConfig = {};
+let stepStates = [];
+let totals = { posts: 0, pages: 0, users: 0, comments: 0, products: 0, images: 0, cpt: {} };
+let selectedThemeId = 'surf';
+
+/* ---------- small helpers ---------- */
+
+function pick(arr, i) { return arr[((i % arr.length) + arr.length) % arr.length]; }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+
+function genPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+  let pw = '';
+  for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  return pw;
+}
+
+/* ---------- synthetic content generators ---------- */
+
+function buildUsers(theme, count) {
+  const users = [];
+  for (let i = 0; i < count; i++) {
+    const first = pick(FIRST_NAMES, i);
+    const last = pick(LAST_NAMES, Math.floor(i / FIRST_NAMES.length));
+    users.push({
+      username: `${first}_${last}_${i}`.toLowerCase(),
+      name: `${first} ${last}`,
+      email: `${first}.${last}.${i}@synthetic-test.example.com`.toLowerCase(),
+      bio: pick(theme.bioTemplates, i)
+    });
+  }
+  return users;
+}
+
+function buildPosts(theme, count) {
+  const n = theme.postTemplates.length;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const tmpl = theme.postTemplates[i % n];
+    const cycle = Math.floor(i / n);
+    out.push({
+      title: cycle === 0 ? tmpl.title : `${tmpl.title} (Vol. ${cycle + 1})`,
+      content: cycle === 0 ? tmpl.content : `<p>${pick(VARIATION_INTROS, i)}</p>${tmpl.content}`
+    });
+  }
+  return out;
+}
+
+function buildPages(theme, count) {
+  const pool = theme.pageTemplates.concat(GENERIC_PAGES);
+  const n = pool.length;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const tmpl = pool[i % n];
+    const cycle = Math.floor(i / n);
+    out.push({
+      title: cycle === 0 ? tmpl.title : `${tmpl.title} (${cycle + 1})`,
+      content: tmpl.content
+    });
+  }
+  return out;
+}
+
+function buildComments(theme, count) {
+  const n = theme.commentTemplates.length;
+  const out = [];
+  for (let i = 0; i < count; i++) out.push(theme.commentTemplates[i % n]);
+  return out;
+}
+
+function buildProducts(theme, count) {
+  const n = theme.productTemplates.length;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const tmpl = theme.productTemplates[i % n];
+    const cycle = Math.floor(i / n);
+    out.push({
+      name: cycle === 0 ? tmpl.name : `${tmpl.name} — Batch ${cycle + 1}`,
+      price: tmpl.price,
+      description: tmpl.description,
+      sku: cycle === 0 ? tmpl.sku : `${tmpl.sku}-${cycle + 1}`,
+      weight: tmpl.weight
+    });
+  }
+  return out;
+}
+
+function buildGenericEntries(slug, count) {
+  const label = slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim() || 'Entry';
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    out.push({
+      title: `${label} ${i + 1}`,
+      content: `<p>${pick(NEUTRAL_PARAGRAPHS, i)}</p><p>${pick(NEUTRAL_PARAGRAPHS, i + 3)}</p>`
+    });
+  }
+  return out;
+}
+
+/* ---------- UI: theme cards ---------- */
+
+function renderThemeGrid() {
+  const grid = document.getElementById('theme-grid');
+  grid.innerHTML = Object.values(THEME_LIBRARY).map(t => `
+    <div class="theme-card" data-theme="${t.id}" onclick="selectTheme('${t.id}')">
+      <div class="theme-name">${escapeHtml(t.label)}</div>
+      <div class="theme-desc">${t.shortDesc}</div>
+    </div>
+  `).join('');
+}
+
+function selectTheme(id) {
+  selectedThemeId = id;
+  document.querySelectorAll('.theme-card').forEach(el => el.classList.toggle('selected', el.dataset.theme === id));
+  document.getElementById('site-prompt').value = THEME_LIBRARY[id].defaultPrompt;
+}
+
+/* ---------- UI: size presets ---------- */
+
+function applyPreset(size) {
+  const p = PRESETS[size];
+  document.getElementById('count-posts').value = p.posts;
+  document.getElementById('count-pages').value = p.pages;
+  document.getElementById('count-users').value = p.users;
+  document.getElementById('count-comments').value = p.comments;
+  document.getElementById('count-products').value = p.products;
+  document.querySelectorAll('.preset-btn').forEach(el => el.classList.toggle('active', el.dataset.size === size));
+}
+
+/* ---------- UI: custom post types ---------- */
+
+function refreshCptEmptyState() {
+  const hasRows = document.querySelectorAll('#cpt-list .cpt-row').length > 0;
+  document.getElementById('cpt-empty').style.display = hasRows ? 'none' : 'block';
+}
+
+function addCptRow(slug, count) {
+  const row = document.createElement('div');
+  row.className = 'cpt-row';
+  row.innerHTML = `
+    <input type="text" class="cpt-slug" placeholder="rest_base, e.g. event, testimonial" value="${escapeHtml(slug || '')}">
+    <input type="number" class="cpt-count" min="0" value="${count != null ? count : 10}">
+    <button type="button" class="btn small" onclick="this.parentElement.remove(); refreshCptEmptyState();">✕</button>
+  `;
+  document.getElementById('cpt-list').appendChild(row);
+  refreshCptEmptyState();
+}
+
+function gatherCustomPostTypes() {
+  return Array.from(document.querySelectorAll('#cpt-list .cpt-row')).map(row => ({
+    slug: row.querySelector('.cpt-slug').value.trim(),
+    count: parseInt(row.querySelector('.cpt-count').value, 10) || 0
+  })).filter(c => c.slug && c.count > 0);
+}
+
+/* ---------- phases ---------- */
+
+function showPhase(id) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function checkConnection() {
+  const url = document.getElementById('site-url').value.trim().replace(/\/$/, '');
+  const user = document.getElementById('wp-user').value.trim();
+  const pass = document.getElementById('wp-pass').value.trim();
+  const badge = document.getElementById('conn-badge');
+  const errEl = document.getElementById('conn-error');
+  const infoEl = document.getElementById('connection-info');
+
+  badge.className = 'badge checking';
+  badge.textContent = 'checking…';
+  errEl.style.display = 'none';
+  infoEl.style.display = 'none';
+  connectionOk = false;
+  document.getElementById('btn-proceed').disabled = true;
+
+  if (!url || !user || !pass) {
+    badge.className = 'badge error';
+    badge.textContent = '✗ failed';
+    errEl.textContent = '⚠️ Enter the site URL, username, and application password first.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const auth = 'Basic ' + btoa(user + ':' + pass);
+
+  try {
+    const [siteRes, userRes] = await Promise.all([
+      fetch(url + '/wp-json', { headers: { 'Authorization': auth } }),
+      fetch(url + '/wp-json/wp/v2/users/me', { headers: { 'Authorization': auth } })
+    ]);
+
+    if (!userRes.ok) throw new Error('Authentication failed — check username and application password');
+
+    const siteData = await siteRes.json();
+    const userData = await userRes.json();
+
+    badge.className = 'badge ok';
+    badge.textContent = '✓ connected';
+
+    document.getElementById('conn-meta').innerHTML = `
+      <div class="meta-item"><div class="lbl">Site name</div><div class="val">${escapeHtml(siteData.name || url)}</div></div>
+      <div class="meta-item"><div class="lbl">WP version</div><div class="val">${siteData.namespaces?.includes('wp/v2') ? 'Compatible' : 'Unknown'}</div></div>
+      <div class="meta-item"><div class="lbl">Logged in as</div><div class="val">${escapeHtml(userData.slug || user)}</div></div>
+      <div class="meta-item"><div class="lbl">Role</div><div class="val">${escapeHtml(userData.roles?.[0] || 'administrator')}</div></div>
+    `;
+    infoEl.style.display = 'block';
+    connectionOk = true;
+    document.getElementById('btn-proceed').disabled = false;
+  } catch(e) {
+    badge.className = 'badge error';
+    badge.textContent = '✗ failed';
+    errEl.textContent = '⚠️ ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function proceedToConfirm() {
+  if (!connectionOk) return;
+  const url = document.getElementById('site-url').value.trim().replace(/\/$/, '');
+  const user = document.getElementById('wp-user').value.trim();
+  const pass = document.getElementById('wp-pass').value.trim();
+  const prompt = document.getElementById('site-prompt').value.trim();
+  const counts = {
+    posts: Math.max(0, parseInt(document.getElementById('count-posts').value, 10) || 0),
+    pages: Math.max(0, parseInt(document.getElementById('count-pages').value, 10) || 0),
+    users: Math.max(0, parseInt(document.getElementById('count-users').value, 10) || 0),
+    comments: Math.max(0, parseInt(document.getElementById('count-comments').value, 10) || 0),
+    products: Math.max(0, parseInt(document.getElementById('count-products').value, 10) || 0)
+  };
+  const images = document.getElementById('opt-images').checked;
+  const customPostTypes = gatherCustomPostTypes();
+
+  siteConfig = { url, user, pass, prompt, theme: selectedThemeId, counts, images, customPostTypes, auth: 'Basic ' + btoa(user + ':' + pass) };
+
+  const themeLabel = THEME_LIBRARY[selectedThemeId].label;
+  document.getElementById('confirm-summary').textContent = `${themeLabel} — "${prompt}" at ${url}`;
+
+  let planHtml = `
+    <div class="plan-item"><div class="num">${counts.posts}</div><div class="lbl">Posts</div></div>
+    <div class="plan-item"><div class="num">${counts.pages}</div><div class="lbl">Pages</div></div>
+    <div class="plan-item"><div class="num">${counts.users}</div><div class="lbl">Users</div></div>
+    <div class="plan-item"><div class="num">${counts.comments}</div><div class="lbl">Comments</div></div>
+    <div class="plan-item"><div class="num">${counts.products}</div><div class="lbl">Products</div></div>
+  `;
+  customPostTypes.forEach(c => {
+    planHtml += `<div class="plan-item"><div class="num">${c.count}</div><div class="lbl">CPT: ${escapeHtml(c.slug)}</div></div>`;
+  });
+  document.getElementById('plan-grid').innerHTML = planHtml;
+  document.getElementById('woo-warn').style.display = counts.products > 0 ? 'block' : 'none';
+  document.getElementById('images-note').style.display = images ? 'block' : 'none';
+
+  showPhase('phase-confirm');
+}
+
+function goBack() { showPhase('phase-setup'); }
+
+function setStep(i, status, meta) {
+  stepStates[i] = { ...stepStates[i], status, ...(meta || {}) };
+  renderProgress('progress-list');
+}
+
+function renderProgress(listId) {
+  const icons = { pending: '○', running: 'spin', done: '✓', error: '✗' };
+  document.getElementById(listId).innerHTML = stepStates.map((s) => `
+    <div class="step ${s.status}">
+      <div class="step-icon">
+        ${s.status === 'running' ? '<div class="spinner"></div>' : icons[s.status]}
+      </div>
+      <span class="step-label">${escapeHtml(s.label)}</span>
+      <span class="step-meta">${escapeHtml(s.error || s.meta || '')}</span>
+    </div>
+  `).join('');
+}
+
+/* ---------- API helpers ---------- */
+
+async function apiPost(endpoint, body) {
+  const resp = await fetch(siteConfig.url + '/wp-json/wp/v2' + endpoint, {
+    method: 'POST',
+    headers: { 'Authorization': siteConfig.auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || 'HTTP ' + resp.status);
+  }
+  return resp.json();
+}
+
+async function wcPost(path, body) {
+  const resp = await fetch(siteConfig.url + '/wp-json/wc/v3' + path, {
+    method: 'POST',
+    headers: { 'Authorization': siteConfig.auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || 'HTTP ' + resp.status);
+  }
+  return resp.json();
+}
+
+async function uploadPlaceholderImage(seed, filenameBase) {
+  const imgResp = await fetch(`https://picsum.photos/seed/${encodeURIComponent(seed)}/900/600`);
+  if (!imgResp.ok) throw new Error('placeholder image fetch failed');
+  const blob = await imgResp.blob();
+  const resp = await fetch(siteConfig.url + '/wp-json/wp/v2/media', {
+    method: 'POST',
+    headers: {
+      'Authorization': siteConfig.auth,
+      'Content-Disposition': `attachment; filename="${filenameBase}.jpg"`,
+      'Content-Type': blob.type || 'image/jpeg'
+    },
+    body: blob
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || 'media upload failed');
+  }
+  return resp.json();
+}
+
+/* ---------- population run ---------- */
+
+async function startPopulation() {
+  totals = { posts: 0, pages: 0, users: 0, comments: 0, products: 0, images: 0, cpt: {} };
+  const theme = THEME_LIBRARY[siteConfig.theme];
+
+  stepStates = [
+    { label: 'Creating categories & tags', status: 'pending', meta: `${theme.categories.length} categories, ${theme.tags.length} tags` },
+    { label: 'Creating users', status: 'pending', meta: `${siteConfig.counts.users} users` },
+    { label: 'Publishing posts', status: 'pending', meta: `${siteConfig.counts.posts} posts` },
+    { label: 'Creating pages', status: 'pending', meta: `${siteConfig.counts.pages} pages` },
+    { label: 'Adding comments', status: 'pending', meta: `${siteConfig.counts.comments} comments` },
+    { label: 'Adding WooCommerce products', status: 'pending', meta: `${siteConfig.counts.products} products` }
+  ];
+  const cptStepOffset = stepStates.length;
+  siteConfig.customPostTypes.forEach(c => {
+    stepStates.push({ label: `Creating "${c.slug}" entries`, status: 'pending', meta: `${c.count} entries` });
+  });
+
+  showPhase('phase-running');
+  renderProgress('progress-list');
+
+  let categoryIds = [], tagIds = [], userIds = [1], postIds = [];
+
+  // Step 0: Categories & Tags
+  setStep(0, 'running');
+  try {
+    for (const name of theme.categories) {
+      const c = await apiPost('/categories', { name }).catch(() => null);
+      if (c?.id) categoryIds.push(c.id);
+    }
+    for (const name of theme.tags) {
+      const t = await apiPost('/tags', { name }).catch(() => null);
+      if (t?.id) tagIds.push(t.id);
+    }
+    setStep(0, 'done', { meta: `${categoryIds.length} categories, ${tagIds.length} tags` });
+  } catch(e) { setStep(0, 'error', { error: e.message }); }
+
+  // Step 1: Users
+  setStep(1, 'running');
+  try {
+    const userData = buildUsers(theme, siteConfig.counts.users);
+    for (const u of userData) {
+      const r = await apiPost('/users', { username: u.username, name: u.name, email: u.email, password: genPassword(), roles: ['subscriber'], description: u.bio }).catch(() => null);
+      if (r?.id) { userIds.push(r.id); totals.users++; }
+    }
+    setStep(1, 'done', { meta: `${totals.users} users created` });
+  } catch(e) { setStep(1, 'error', { error: e.message }); }
+
+  // Step 2: Posts
+  setStep(2, 'running');
+  try {
+    const postData = buildPosts(theme, siteConfig.counts.posts);
+    for (let i = 0; i < postData.length; i++) {
+      const p = postData[i];
+      const body = {
+        title: p.title, content: p.content, status: 'publish',
+        categories: categoryIds.length ? [categoryIds[i % categoryIds.length]] : [],
+        tags: tagIds.length ? [tagIds[i % tagIds.length], tagIds[(i + 1) % tagIds.length]] : [],
+        author: userIds[i % userIds.length]
+      };
+      if (siteConfig.images) {
+        const media = await uploadPlaceholderImage(`post-${i}-${theme.id}`, `post-${i}`).catch(() => null);
+        if (media?.id) { body.featured_media = media.id; totals.images++; }
+      }
+      const r = await apiPost('/posts', body).catch(() => null);
+      if (r?.id) { postIds.push(r.id); totals.posts++; }
+    }
+    setStep(2, 'done', { meta: `${totals.posts} posts published` });
+  } catch(e) { setStep(2, 'error', { error: e.message }); }
+
+  // Step 3: Pages
+  setStep(3, 'running');
+  try {
+    const pageData = buildPages(theme, siteConfig.counts.pages);
+    for (let i = 0; i < pageData.length; i++) {
+      const pg = pageData[i];
+      const body = { title: pg.title, content: pg.content, status: 'publish' };
+      if (siteConfig.images) {
+        const media = await uploadPlaceholderImage(`page-${i}-${theme.id}`, `page-${i}`).catch(() => null);
+        if (media?.id) { body.featured_media = media.id; totals.images++; }
+      }
+      const r = await apiPost('/pages', body).catch(() => null);
+      if (r?.id) totals.pages++;
+    }
+    setStep(3, 'done', { meta: `${totals.pages} pages created` });
+  } catch(e) { setStep(3, 'error', { error: e.message }); }
+
+  // Step 4: Comments
+  setStep(4, 'running');
+  try {
+    const commentData = buildComments(theme, siteConfig.counts.comments);
+    for (let i = 0; i < commentData.length; i++) {
+      const postId = postIds.length ? postIds[i % postIds.length] : 9;
+      await apiPost('/comments', {
+        post: postId, author: userIds[i % userIds.length],
+        content: commentData[i], status: 'approve'
+      }).catch(() => null);
+      totals.comments++;
+    }
+    setStep(4, 'done', { meta: `${totals.comments} comments added` });
+  } catch(e) { setStep(4, 'error', { error: e.message }); }
+
+  // Step 5: WooCommerce
+  setStep(5, 'running');
+  try {
+    const wcUrl = '/products';
+    const testResp = await fetch(siteConfig.url + '/wp-json/wc/v3/products', { headers: { 'Authorization': siteConfig.auth } });
+    if (!testResp.ok) throw new Error('WooCommerce not active on this site — skipped');
+    const productData = buildProducts(theme, siteConfig.counts.products);
+    for (let i = 0; i < productData.length; i++) {
+      const prod = productData[i];
+      const body = { name: prod.name, regular_price: prod.price, description: prod.description, status: 'publish', type: 'simple', sku: prod.sku };
+      if (siteConfig.images) {
+        const media = await uploadPlaceholderImage(`product-${i}-${theme.id}`, `product-${i}`).catch(() => null);
+        if (media?.id) { body.images = [{ id: media.id }]; totals.images++; }
+      }
+      const r = await wcPost(wcUrl, body).catch(() => null);
+      if (r?.id) totals.products++;
+    }
+    setStep(5, 'done', { meta: `${totals.products} products added` });
+  } catch(e) { setStep(5, 'error', { error: e.message }); }
+
+  // Steps 6+: custom post types
+  for (let ci = 0; ci < siteConfig.customPostTypes.length; ci++) {
+    const cfg = siteConfig.customPostTypes[ci];
+    const stepIdx = cptStepOffset + ci;
+    setStep(stepIdx, 'running');
+    totals.cpt[cfg.slug] = 0;
+    try {
+      const entries = buildGenericEntries(cfg.slug, cfg.count);
+      for (const entry of entries) {
+        const r = await apiPost('/' + cfg.slug, { title: entry.title, content: entry.content, status: 'publish' }).catch(() => null);
+        if (r?.id) totals.cpt[cfg.slug]++;
+      }
+      setStep(stepIdx, 'done', { meta: `${totals.cpt[cfg.slug]} entries created` });
+    } catch(e) { setStep(stepIdx, 'error', { error: e.message }); }
+  }
+
+  showComplete();
+}
+
+function showComplete() {
+  showPhase('phase-complete');
+  document.getElementById('final-steps').innerHTML = stepStates.map(s => `
+    <div class="step ${s.status === 'error' ? 'error' : 'done'}">
+      <div class="step-icon">${s.status === 'error' ? '✗' : '✓'}</div>
+      <span class="step-label">${escapeHtml(s.label)}</span>
+      <span class="step-meta">${escapeHtml(s.error || s.meta || '')}</span>
+    </div>
+  `).join('');
+
+  let totalsHtml = `
+    <div class="total-item"><div class="num">${totals.posts}</div><div class="lbl">Posts</div></div>
+    <div class="total-item"><div class="num">${totals.pages}</div><div class="lbl">Pages</div></div>
+    <div class="total-item"><div class="num">${totals.users}</div><div class="lbl">Users</div></div>
+    <div class="total-item"><div class="num">${totals.comments}</div><div class="lbl">Comments</div></div>
+    <div class="total-item"><div class="num">${totals.products}</div><div class="lbl">Products</div></div>
+  `;
+  if (siteConfig.images) {
+    totalsHtml += `<div class="total-item"><div class="num">${totals.images}</div><div class="lbl">Images</div></div>`;
+  }
+  Object.keys(totals.cpt).forEach(slug => {
+    totalsHtml += `<div class="total-item"><div class="num">${totals.cpt[slug]}</div><div class="lbl">${escapeHtml(slug)}</div></div>`;
+  });
+  document.getElementById('totals-grid').innerHTML = totalsHtml;
+
+  const link = document.getElementById('site-visit-link');
+  link.href = siteConfig.url;
+  link.textContent = '↗ View ' + siteConfig.url;
+}
+
+function resetTool() { showPhase('phase-setup'); }
+
+/* ---------- init ---------- */
+
+renderThemeGrid();
+selectTheme('surf');
+applyPreset('small');
+refreshCptEmptyState();
+</script>
+</body>
+</html>
